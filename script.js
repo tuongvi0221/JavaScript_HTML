@@ -68,7 +68,7 @@ const inputClosePin = document.querySelector('.form__input--pin');
 const displayMovements = function (movements) {
   containerMovements.innerHTML = ''; //.text = 0;
   movements.forEach(function (mov, i) {
-    const type = mov > 0 ? 'deposite' : 'withdrawal';
+    const type = mov > 0 ? 'deposit' : 'withdrawal';
     const html = `
      <div class="movements__row">
           <div class="movements__type movements__type--${type}">${i + 1} ${type}</div>
@@ -78,133 +78,79 @@ const displayMovements = function (movements) {
     containerMovements.insertAdjacentHTML('afterbegin', html);
   });
 };
-displayMovements(account1.movements);
-console.log(containerMovements.innerHTML);
-/////////////////////////////////////////////////
-const arr = ['a', 'b', 'c', 'd', 'e'];
-// SLICE: lay phan tu tu vi tri index va kh lam thay doi arr
-console.log(arr.slice(2));
-console.log(arr);
 
-// SPLICE: ssau khi lay thi xoa tat ca phan tu tu index tro di
-console.log(arr.splice(2)); // lay tu index 2 tro di c d e
-console.log(arr); // sau khi slice thi da xoa tat ca tu index 2 tro di a b
-
-//REVERSE: dao nguoc va thay doi chuoi ban dau
-const arr2 = ['j', 'd', 'k', 'f']; // f k d j
-console.log(arr2.reverse());
-
-//CONCAT: noi chuoi
-const letters = arr.concat(arr2);
-console.log(letters);
-
-//JOIN
-console.log(letters.join('-')); // a-b-f-k-d-j
-
-//AT()
-console.log(letters[0]);// a
-console.log(letters.at(0));// a
-
-//getting last array
-console.log(letters[letters.length - 1]); //j
-console.log(letters.slice(-1));
-console.log(letters.at(-1));
-
-// ------FOR EACH
-const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
-
-for (const [i, value] of movements.entries()) {
-  if (value > 0) {
-    console.log(`Movement ${i + 1}, You deporited ${value}`);
-  } else {
-    console.log(`Movement ${i + 1}, You withdrew ${Math.abs(value)}`);
-  }
+const calcDisplayBalance = function (acc) {
+  acc.balance = acc.movements.reduce((acc, mov) => acc + mov, 0);
+  labelBalance.textContent = `${acc.balance}€`;
 };
 
-console.log('-------------FOR EACH-------------');
-movements.forEach(function (value, i) { // 2 gtri nguoc nhau
-  if (value > 0) {
-    console.log(`Movement ${i + 1}, You deporited ${value}`);
-  } else {
-    console.log(`Movement ${i + 1}, You withdrew ${Math.abs(value)}`);
+const calcDisplaySummary = function (acc) {
+  const incomes = acc.movements
+    .filter(mov => mov > 0)
+    .reduce((acc, mov) => acc + mov, 0);
+  labelSumIn.textContent = `${incomes}€`;
+
+  const out = acc.movements
+    .filter(mov => mov < 0)
+    .reduce((acc, mov) => acc + mov, 0);
+  labelSumOut.textContent = `${Math.abs(out)}€`;
+
+  const interest = acc.movements
+    .filter(mov => mov > 0)
+    .map(deposit => (deposit * acc.interestRate) / 100)
+    .filter((int, i, arr) => {
+      // Only add interest if it is at least 1€
+      return int >= 1;
+    })
+    .reduce((acc, int) => acc + int, 0);
+  labelSumInterest.textContent = `${interest}€`;
+};
+
+const createUsernames = function (accs) {
+  accs.forEach(function (acc) {
+    acc.username = acc.owner
+      .toLowerCase()
+      .split(' ')
+      .map(name => name[0])
+      .join('');
+  });
+};
+createUsernames(accounts);
+
+const updateUI = function (acc) {
+  // Display movements
+  displayMovements(acc.movements);
+
+  // Display balance
+  calcDisplayBalance(acc);
+
+  // Display summary
+  calcDisplaySummary(acc);
+};
+
+// Event handler for login
+let currentAccount;
+
+btnLogin.addEventListener('click', function (e) {
+  // Prevent form from submitting
+  e.preventDefault();
+
+  currentAccount = accounts.find(
+    acc => acc.username === inputLoginUsername.value
+  );
+
+  if (currentAccount?.pin === +inputLoginPin.value) {
+    // Display UI and message
+    labelWelcome.textContent = `Welcome back, ${
+      currentAccount.owner.split(' ')[0]
+    }`;
+    containerApp.style.opacity = 100;
+
+    // Clear input fields
+    inputLoginUsername.value = inputLoginPin.value = '';
+    inputLoginPin.blur();
+
+    // Update UI
+    updateUI(currentAccount);
   }
 });
-
-//0: function(200); 1:function(450)....
-
-const currencies = new Map([
-  ['USD', 'United States dollar'],
-  ['EUR', 'Euro'],
-  ['GBP', 'Pound sterling'],
-]);
-
-console.log('----------FOR EACH WITH MAP-----------')
-// tham so thu 3 co hay kh cung dc
-currencies.forEach(function (value, key, map) {
-  console.log(`${key}: ${value}`);
-})
-
-
-console.log('----------FOR EACH WITH SET-----------')
-//Set kh co index nen key vo nghia : tham so thu 3 co hay kh cung dc
-const currenciesSet = new Set(['USD', 'GBP', 'USD', 'EUR', 'GBP']);
-currenciesSet.forEach(function (value) {
-  console.log(`${value}`);
-})
-
-/*
-Coding Challenge #1
-Julia and Kate are doing a study on dogs. So each of them asked 5 dog owners
-about their dog's age, and stored the data into an array (one array for each). For
-now, they are just interested in knowing whether a dog is an adult or a puppy.
-A dog is an adult if it is at least 3 years old, and it's a puppy if it's less than 3 years
-old.
-Your tasks:
-Create a function 'checkDogs', which accepts 2 arrays of dog's ages
-('dogsJulia' and 'dogsKate'), and does the following things:
-
-2. Create an array with both Julia's (corrected) and Kate's data
-3. For each remaining dog, log to the console whether it's an adult ("Dog number 1
-is an adult, and is 5 years old") or a puppy ("Dog number 2 is still a puppy
-�
-")
-4. Run the function for both test datasets
-Test data:
-§ Data 1: Julia's data [3, 5, 2, 12, 7], Kate's data [4, 1, 15, 8, 3]
-§ Data 2: Julia's data [9, 16, 6, 8, 3], Kate's data [10, 5, 6, 1, 4]
-Hints: Use tools from all lectures in this section so far �
-GOOD LUCK �*/
-
-const checkDogs = function (dogJulia, dogsKate) {
-  // 1. Julia found out that the owners of the first and the last two dogs actually have
-  // cats, not dogs! So create a shallow copy of Julia's array, and remove the cat
-  // ages from that copied array (because it's a bad practice to mutate function
-  // parameters)
-  const dogJuliaCorrected = dogJulia.slice();
-
-  dogJuliaCorrected.splice(0, 1);
-
-  dogJuliaCorrected.splice(-2);
-  console.log(dogJuliaCorrected);
-
-  // 2. Create an array with both Julia's (corrected) and Kate's data
-  const dogs = dogJuliaCorrected.concat(dogsKate);
-  console.log(dogs);
-
-  // For each remaining dog, log to the console whether it's an adult ("Dog number 1
-  // is an adult, and is 5 years old") or a puppy ("Dog number 2 is still a puppy
-  // �
-  // ")
-  dogs.forEach(function (dog, i) {
-    if (dog >= 3) {
-      console.log(`Dog number ${i + 1} is an adult, and is ${dog} years olds`);
-    } else {
-      console.log(`Dog number ${i + 1} is still, and is a puppy🐶🐶`);
-
-    }
-  })
-
-}
-
-checkDogs([3, 5, 2, 12, 7], [4, 1, 15, 8, 3]);
-
